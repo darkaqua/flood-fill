@@ -1,93 +1,135 @@
-type SimpleVector2d = [number, number];
-
-type Vector2d = {
-  x: number;
-  y: number;
-};
-
-type Size = {
+export type Grid = {
   width: number;
   height: number;
+  // cells: Uint32Array;
+
+  floodFill: (x: number, y: number) => FloodFillResult;
+
+  fill: (value: number) => void;
+  set: (x: number, y: number, value: number) => void;
+  get: (x: number, y: number) => number;
+  // toString: (toString?: (value: number) => string) => string;
 };
 
-export const getGrid = ({ width, height }: Size) => {
-  const data: number[][] = [];
+export type FloodFillResult = {
+  filledGrid: Grid;
+  cellCount: number;
+  startValue: number;
+  startX: number;
+  startY: number;
+};
 
-  for (let y = 0; y < height; y++) {
-    data[y] = [];
-    for (let x = 0; x < width; x++) data[y][x] = 0;
-  }
-  const _set = ([x, y]: SimpleVector2d, filler: number) =>
-    (data[y][x] = filler);
+export const createGrid = (width: number, height: number): Grid => {
+  const cells = new Uint32Array(width * height);
 
-  const _get = ([x, y]: SimpleVector2d): number => {
-    return data[y] ? data[y][x] : null;
+  const fill = (value: number): void => {
+    cells.fill(value);
   };
 
-  const set = ({ x, y }: Vector2d, filler: number) => _set([x, y], filler);
-  const get = ({ x, y }: Vector2d): number => _get([x, y]);
+  const set = (x: number, y: number, value: number): void => {
+    x = x | 0;
+    y = y | 0;
+    cells[y * width + x] = value;
+  };
 
-  const getData = (): number[][] => data;
+  const get = (x: number, y: number): number => {
+    x = x | 0;
+    y = y | 0;
+    return cells[y * width + x];
+  };
 
-  const fillPoint = ({ x, y }: Vector2d, filler: number) => {
-    const empty = _get([x, y]);
+  // const toString = (toString?: (value: number) => string): string => {
+  //   let output = "";
+  //
+  //   for (let y = 0; y < height; y++) {
+  //     for (let x = 0; x < width; x++) {
+  //       const cell = cells[y * width + x];
+  //
+  //       output +=
+  //         typeof toString === "function"
+  //           ? toString(cell)
+  //           : cell !== 0
+  //           ? "#"
+  //           : " ";
+  //     }
+  //
+  //     if (y < height - 1) {
+  //       output += "\n";
+  //     }
+  //   }
+  //
+  //   return output;
+  // };
 
-    const queueX = [x];
-    const queueY = [y];
+  const floodFill = (x: number, y: number): FloodFillResult => {
+    x = x | 0;
+    y = y | 0;
 
-    let minPositionX: number = x;
-    let minPositionY: number = y;
-    let maxPositionX: number = x;
-    let maxPositionY: number = y;
+    const filledGrid = createGrid(width, height);
+    const enqueued = createGrid(width, height);
+    const startValue = get(x, y);
+    let cellCount = 0;
 
-    let area = 0;
+    const queue = [];
 
-    while (queueY.length) {
-      const currentX = queueX.pop();
-      const currentY = queueY.pop();
+    const enqueue = (x: number, y: number) => {
+      // Outside the grid
+      if (x < 0 || x >= width || y < 0 || y >= height) return;
 
-      minPositionX = currentX < minPositionX ? currentX : minPositionX;
-      maxPositionY = currentX > maxPositionY ? currentX : maxPositionY;
+      // Already in queue
+      if (enqueued.get(x, y) !== 0) return;
 
-      let north: number;
-      let south: number;
+      // Already visited
+      if (filledGrid.get(x, y) !== 0) return;
 
-      if (_get([currentX, currentY]) === empty) {
-        north = south = currentY;
+      enqueued.set(x, y, 1);
+      queue.push({ x, y });
+    };
 
-        do {
-          north--;
-        } while (_get([currentX, north]) === empty && north >= 0);
+    enqueue(x, y);
 
-        do {
-          south++;
-        } while (_get([currentX, south]) === empty && south < height);
+    while (queue.length > 0) {
+      const { x, y } = queue.shift();
 
-        minPositionY = north + 1 < minPositionY ? north + 1 : minPositionY;
-        maxPositionX = south - 1 > maxPositionX ? south - 1 : maxPositionX;
+      // Outside the grid
+      if (x < 0 || x >= width || y < 0 || y >= height) continue;
 
-        for (let n = north + 1; n < south; n++) {
-          _set([currentX, n], filler);
-          area++;
+      // Current value to check
+      const value = get(x, y);
 
-          if (_get([currentX - 1, n]) === empty) {
-            queueX.push(currentX - 1);
-            queueY.push(n);
-          }
+      // Not of the same kind
+      if (value !== startValue) continue;
 
-          if (_get([currentX + 1, n]) === empty) {
-            queueX.push(currentX + 1);
-            queueY.push(n);
-          }
-        }
-      }
+      // Already visited
+      if (filledGrid.get(x, y) !== 0) continue;
+
+      // Mark as visited
+      filledGrid.set(x, y, 1);
+      cellCount++;
+
+      // Visit neighbors
+      enqueue(x - 1, y);
+      enqueue(x + 1, y);
+      enqueue(x, y - 1);
+      enqueue(x, y + 1);
     }
+
+    return {
+      filledGrid,
+      cellCount,
+      startValue,
+      startX: x,
+      startY: y,
+    };
   };
 
   return {
+    width,
+    height,
+
+    fill,
+    floodFill,
     set,
     get,
-    getData,
-    fillPoint,
   };
 };
