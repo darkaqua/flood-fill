@@ -1,14 +1,13 @@
 export type Grid = {
   width: number;
   height: number;
-  // cells: Uint32Array;
+  cells: Uint32Array;
 
   floodFill: (x: number, y: number) => FloodFillResult;
 
   fill: (value: number) => void;
   set: (x: number, y: number, value: number) => void;
   get: (x: number, y: number) => number;
-  // toString: (toString?: (value: number) => string) => string;
 };
 
 export type FloodFillResult = {
@@ -37,29 +36,6 @@ export const createGrid = (width: number, height: number): Grid => {
     y = y | 0;
     return cells[y * width + x];
   };
-
-  // const toString = (toString?: (value: number) => string): string => {
-  //   let output = "";
-  //
-  //   for (let y = 0; y < height; y++) {
-  //     for (let x = 0; x < width; x++) {
-  //       const cell = cells[y * width + x];
-  //
-  //       output +=
-  //         typeof toString === "function"
-  //           ? toString(cell)
-  //           : cell !== 0
-  //           ? "#"
-  //           : " ";
-  //     }
-  //
-  //     if (y < height - 1) {
-  //       output += "\n";
-  //     }
-  //   }
-  //
-  //   return output;
-  // };
 
   const floodFill = (x: number, y: number): FloodFillResult => {
     x = x | 0;
@@ -126,6 +102,7 @@ export const createGrid = (width: number, height: number): Grid => {
   return {
     width,
     height,
+    cells,
 
     fill,
     floodFill,
