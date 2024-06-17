@@ -1,0 +1,14 @@
+{
+  "scripts": {
+    "build": "yarn global add esbuild && esbuild --bundle --format=esm mod.ts > mod.js",
+    "::publish": "npm publish --access public"
+  },
+  "name": "@darkaqua/flood-fill",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "mod.js",
+  "module": "mod.js",
+  "types": "mod.ts",
+  "private": false,
+  "license": "MIT"
+}
